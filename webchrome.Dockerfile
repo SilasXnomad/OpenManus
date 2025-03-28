@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Set non-interactive installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -27,8 +27,9 @@ RUN apt-get update && apt-get install -y \
 RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
-    && apt-get install -y --no-install-recommends google-chrome-stable \
-    && apt-get clean \
+    && apt-get install -y --no-install-recommends google-chrome-stable git curl python3.12-venv
+
+RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # 设置 VNC 密码
@@ -71,17 +72,13 @@ google-chrome --display=:0 --no-sandbox --disable-dev-shm-usage --disable-gpu --
 # 设置工作目录
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends git curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && (command -v uv >/dev/null 2>&1 || pip install --no-cache-dir uv)
-
 COPY . .
 
-RUN uv pip install --system -r requirements.txt
+RUN python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 EXPOSE 5900 9222 6080 8080
-CMD ["/bin/bash", "-c", "/start.sh && python3 app.py"]
+CMD ["/bin/bash", "-c", "/start.sh && .venv/bin/python3 app.py"]
 
-# docker build -t silasxnomad/webchrome:v0.0.1 .
-# docker push silasxnomad/webchrome:v0.0.1
-# docker run -d -p 5900:5900 -p 9222:9222 -p 6080:6080 --name temp temp
+# docker build -t silasxnomad/openmanus:v0.0.1 .
+# docker push silasxnomad/openmanus:v0.0.1
+# docker run -d -p 5900:5900 -p 9222:9222 -p 6080:6080 -p 8080 --name temp temp

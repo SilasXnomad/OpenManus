@@ -109,6 +109,10 @@ async def download_file(file_path: str):
 
 @app.post("/tasks")
 async def create_task(prompt: str = Body(..., embed=True)):
+    for task in task_manager.tasks:
+        if task_manager.tasks[task].status == "running":
+            raise HTTPException(status_code=404, detail="there is already a task running.")
+
     task = task_manager.create_task(prompt)
     asyncio.create_task(run_task(task.id, prompt))
     return {"task_id": task.id}
